@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<title>WebRTC 1 to 1 handshake</title>
+<style>
+  video {
+    width: 20px;
+    height: 20px;
+    border: 1px solid black;
+  }
+</style>
+<div>
+  <video id="local-video" autoplay></video>
+  <video id="remote-video" autoplay></video>
+</div>
+<div>
+  <button type="button" id="startVideo">Start video</button>
+  <button type="button" id="stopVideo">Stop video</button>
+  <button type="button" id="connect">Connect</button>
+  <button type="button" id="hangUp">Hang Up</button>
+</div>
+
+<p>
+  SDP to send:<input type="text" id="text-for-send-sdp"></input>
+</p>
+
+<p>
+  SDP to recv:<input type="text" id="text-for-receive-sdp"></input>
+  <button type="button" id="onSDP">Receive SDP</button>
+</p>
+
+<p>
+  ICE to send:<input type="text" id="text-for-send-ice"></input>
+</p>
+<p>
+  ICE to receive: <input type="text" id="text-for-receive-ice"></input>
+  <button type="button" id="onICE">Receive ICE Candidates</button>
+</p>
+<script type="text/javascript" src="orig.js"></script>
