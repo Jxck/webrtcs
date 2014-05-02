@@ -1,4 +1,3 @@
-
 var localVideo = document.getElementById('local-video');
 var remoteVideo = document.getElementById('remote-video');
 var localStream = null;
@@ -7,36 +6,52 @@ var peerStarted = false;
 var mediaConstraints = {'mandatory': {'OfferToReceiveAudio':true, 'OfferToReceiveVideo':true }};
 
 // ----------------- handshake --------------
-var textForSendSDP = document.getElementById('text-for-send-sdp');
-var textForSendICE = document.getElementById('text-for-send-ice');
-var textToReceiveSDP = document.getElementById('text-for-receive-sdp');
-var textToReceiveICE = document.getElementById('text-for-receive-ice');
+var localSDP = document.getElementById('localSdp');
+var remoteSDP = document.getElementById('remoteSdp');
+var localICE = document.getElementById('localIce');
+var remoteICE = document.getElementById('remoteIce');
 var iceSeparator = '------ ICE Candidate -------';
 var CR = String.fromCharCode(13);
 
-function onSDP() {
-  var text = textToReceiveSDP.value;
-  var evt = JSON.parse(text);
-  if (peerConnection) {
-    onAnswer(evt);
-  }
-  else {
-    onOffer(evt);
-  }
+function sendSDP(sdp) {
+  var text = JSON.stringify(sdp);
+  console.log("---sending sdp text ---");
+  console.log(text);
+  localSDP.value = text;
+}
 
-  textToReceiveSDP.value ="";
+function recvSDP() {
+  var text = remoteSDP.value;
+  var sdp = JSON.parse(text);
+  if (peerConnection) {
+    onAnswer(sdp);
+  } else {
+    onOffer(sdp);
+  }
+  remoteSDP.value ="";
+}
+
+function onAnswer(sdp) {
+  console.log("Received Answer...");
+  console.log(sdp);
+
+  if (!peerConnection) {
+    console.error('peerConnection NOT exist!');
+    return;
+  }
+  peerConnection.setRemoteDescription(new RTCSessionDescription(sdp));
 }
 
 //--- multi ICE candidate ---
-function onICE() {
-  var text = textToReceiveICE.value;
+function recvICE() {
+  var text = remoteICE.value;
   var arr = text.split(iceSeparator);
   for (var i = 1, len = arr.length; i < len; i++) {
     var evt = JSON.parse(arr[i]);
     onCandidate(evt);
   }
 
-  textToReceiveICE.value ="";
+  remoteICE.value ="";
 }
 
 
@@ -47,11 +62,6 @@ function onOffer(evt) {
   sendAnswer(evt);
 }
 
-function onAnswer(evt) {
-  console.log("Received Answer...")
-    console.log(evt);
-  setAnswer(evt);
-}
 
 function onCandidate(evt) {
   var candidate = new RTCIceCandidate({sdpMLineIndex:evt.sdpMLineIndex, sdpMid:evt.sdpMid, candidate:evt.candidate});
@@ -60,38 +70,28 @@ function onCandidate(evt) {
   peerConnection.addIceCandidate(candidate);
 }
 
-function sendSDP(sdp) {
-  var text = JSON.stringify(sdp);
-  console.log("---sending sdp text ---");
-  console.log(text);
-
-  textForSendSDP.value = text;
-}
 
 function sendCandidate(candidate) {
   var text = JSON.stringify(candidate);
   console.log("---sending candidate text ---");
   console.log(text);
 
-  textForSendICE.value = (textForSendICE.value + CR + iceSeparator + CR + text + CR);
-  textForSendICE.scrollTop = textForSendICE.scrollHeight;
+  localICE.value = (localICE.value + CR + iceSeparator + CR + text + CR);
+  localICE.scrollTop = localICE.scrollHeight;
 }
 
 // ---------------------- video handling -----------------------
 // start local video
 function startVideo() {
-  navigator.webkitGetUserMedia({video: true, audio: false},
-      function (stream) { // success
-        localStream = stream;
-        localVideo.src = window.webkitURL.createObjectURL(stream);
-        localVideo.play();
-        localVideo.volume = 0;
-      },
-      function (error) { // error
-        console.error('An error occurred: [CODE ' + error.code + ']');
-        return;
-      }
-      );
+  var config = {video: false, audio: false};
+  navigator.webkitGetUserMedia(config, function success(stream) {
+    localStream = stream;
+    localVideo.src = window.webkitURL.createObjectURL(stream);
+    localVideo.play();
+    localVideo.volume = 0;
+  }, function error(err) {
+    console.error(err, err.code)
+  });
 }
 
 // stop local video
@@ -125,7 +125,7 @@ function prepareNewConnection() {
   };
 
   console.log('Adding local stream...');
-  peer.addStream(localStream);
+  // peer.addStream(localStream);
 
   peer.addEventListener("addstream", onRemoteStreamAdded, false);
   peer.addEventListener("removestream", onRemoteStreamRemoved, false)
@@ -143,18 +143,6 @@ function prepareNewConnection() {
   }
 
   return peer;
-}
-
-function sendOffer() {
-  peerConnection = prepareNewConnection();
-  peerConnection.createOffer(function (sessionDescription) { // in case of success
-    peerConnection.setLocalDescription(sessionDescription);
-    console.log("Sending: SDP");
-    console.log(sessionDescription);
-    sendSDP(sessionDescription);
-  }, function () { // in case of error
-    console.log("Create Offer failed");
-  }, mediaConstraints);
 }
 
 function setOffer(evt) {
@@ -182,24 +170,27 @@ function sendAnswer(evt) {
   }, mediaConstraints);
 }
 
-function setAnswer(evt) {
-  if (! peerConnection) {
-    console.error('peerConnection NOT exist!');
-    return;
-  }
-  peerConnection.setRemoteDescription(new RTCSessionDescription(evt));
-}
-
 // -------- handling user UI event -----
 // start the connection upon user request
 function connect() {
+  if (peerStarted) return;
   //if (!peerStarted && localStream && channelReady) {
-  if (!peerStarted && localStream) {
-    sendOffer();
-    peerStarted = true;
-  } else {
-    alert("Local stream not running yet - try again.");
-  }
+  //if (!peerStarted && localStream) {
+  //  sendOffer();
+  //  peerStarted = true;
+  //} else {
+  //  alert("Local stream not running yet - try again.");
+  //}
+  peerConnection = prepareNewConnection();
+  peerConnection.createOffer(function (sessionDescription) { // in case of success
+    peerConnection.setLocalDescription(sessionDescription);
+    console.log("Sending: SDP", sessionDescription);
+    sendSDP(sessionDescription);
+  }, function () { // in case of error
+    console.log("Create Offer failed");
+  }, mediaConstraints);
+
+  peerStarted = true;
 }
 
 // stop the connection upon user request
@@ -211,9 +202,8 @@ function hangUp() {
 function stop() {
   peerConnection.close();
   peerConnection = null;
-  peerStarted = false;    
+  peerStarted = false;
 }
-
 
 window.onload = function() {
   var $startVideo = document.getElementById("startVideo");
@@ -221,14 +211,14 @@ window.onload = function() {
   var $conect     = document.getElementById("connect");
   var $hangUp     = document.getElementById("hangUp");
 
-  $startVideo.onclick =startVideo;
+  $startVideo.onclick = startVideo;
   $stopVideo.onclick = stopVideo;
   $conect.onclick = connect;
   $hangUp.onclick = hangUp;
 
-  var $onSDP = document.getElementById("onSDP");
-  var $onICE = document.getElementById("onICE");
+  var $recvSDP = document.getElementById("recvSDP");
+  var $recvICE = document.getElementById("recvICE");
 
-  $onSDP.onclick = onSDP;
-  $onICE.onclick = onICE;
+  $recvSDP.onclick = recvSDP;
+  $recvICE.onclick = recvICE;
 }

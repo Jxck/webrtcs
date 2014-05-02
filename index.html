@@ -12,26 +12,28 @@
   <video id="remote-video" autoplay></video>
 </div>
 <div>
-  <button type="button" id="startVideo">Start video</button>
-  <button type="button" id="stopVideo">Stop video</button>
-  <button type="button" id="connect">Connect</button>
-  <button type="button" id="hangUp">Hang Up</button>
+  <button id="startVideo">Start video</button>
+  <button id="stopVideo">Stop video</button>
+  <button id="connect">Connect</button>
+  <button id="hangUp">Hang Up</button>
 </div>
 
 <p>
-  SDP to send:<input type="text" id="text-for-send-sdp"></input>
+  SDP to send:<input type="text" id="localSdp"></input>
 </p>
 
 <p>
-  SDP to recv:<input type="text" id="text-for-receive-sdp"></input>
-  <button type="button" id="onSDP">Receive SDP</button>
+  SDP to recv:<input type="text" id="remoteSdp"></input>
+  <button type="button" id="recvSDP">Receive SDP</button>
 </p>
 
 <p>
-  ICE to send:<input type="text" id="text-for-send-ice"></input>
+  ICE to send:<input type="text" id="localIce"></input>
 </p>
+
 <p>
-  ICE to receive: <input type="text" id="text-for-receive-ice"></input>
-  <button type="button" id="onICE">Receive ICE Candidates</button>
+  ICE to receive: <input type="text" id="remoteIce"></input>
+  <button type="button" id="recvICE">Receive ICE</button>
 </p>
-<script type="text/javascript" src="orig.js"></script>
+
+<script type="text/javascript" src="index.js"></script>
