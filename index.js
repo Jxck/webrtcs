@@ -31,14 +31,34 @@ function recvSDP() {
   remoteSDP.value ="";
 }
 
+function onOffer(sdp) {
+  console.log("Received offer...", sdp);
+
+  // set offer
+  peerConnection = prepareNewConnection();
+  peerConnection.setRemoteDescription(new RTCSessionDescription(sdp));
+
+  // send answer
+  console.log('sending Answer. Creating remote session description...');
+
+  peerConnection.createAnswer(function success(sdp) {
+    peerConnection.setLocalDescription(sdp);
+    console.log("Sending: SDP", sdp);
+
+    sendSDP(sdp);
+  }, function error() {
+    console.log("Create Answer failed");
+  }, mediaConstraints);
+}
+
 function onAnswer(sdp) {
-  console.log("Received Answer...");
-  console.log(sdp);
+  console.log("Received Answer...", sdp);
 
   if (!peerConnection) {
     console.error('peerConnection NOT exist!');
     return;
   }
+
   peerConnection.setRemoteDescription(new RTCSessionDescription(sdp));
 }
 
@@ -54,13 +74,6 @@ function recvICE() {
   remoteICE.value ="";
 }
 
-
-function onOffer(evt) {
-  console.log("Received offer...")
-    console.log(evt);
-  setOffer(evt);
-  sendAnswer(evt);
-}
 
 
 function onCandidate(evt) {
@@ -145,29 +158,7 @@ function prepareNewConnection() {
   return peer;
 }
 
-function setOffer(evt) {
-  if (peerConnection) {
-    console.error('peerConnection alreay exist!');
-  }
-  peerConnection = prepareNewConnection();
-  peerConnection.setRemoteDescription(new RTCSessionDescription(evt));
-}
-
 function sendAnswer(evt) {
-  console.log('sending Answer. Creating remote session description...' );
-  if (! peerConnection) {
-    console.error('peerConnection NOT exist!');
-    return;
-  }
-
-  peerConnection.createAnswer(function (sessionDescription) { // in case of success
-    peerConnection.setLocalDescription(sessionDescription);
-    console.log("Sending: SDP");
-    console.log(sessionDescription);
-    sendSDP(sessionDescription);
-  }, function () { // in case of error
-    console.log("Create Answer failed");
-  }, mediaConstraints);
 }
 
 // -------- handling user UI event -----
