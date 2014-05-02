@@ -43,8 +43,8 @@ function onOffer(sdp) {
 
   peerConnection.createAnswer(function success(sdp) {
     peerConnection.setLocalDescription(sdp);
-    console.log("Sending: SDP", sdp);
 
+    console.log("Sending: SDP", sdp);
     sendSDP(sdp);
   }, function error() {
     console.log("Create Answer failed");
@@ -53,12 +53,6 @@ function onOffer(sdp) {
 
 function onAnswer(sdp) {
   console.log("Received Answer...", sdp);
-
-  if (!peerConnection) {
-    console.error('peerConnection NOT exist!');
-    return;
-  }
-
   peerConnection.setRemoteDescription(new RTCSessionDescription(sdp));
 }
 
