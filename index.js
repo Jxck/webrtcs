@@ -3,7 +3,12 @@ var remoteVideo = document.getElementById('remote-video');
 var localStream = null;
 var peerConnection = null;
 var peerStarted = false;
-var mediaConstraints = {'mandatory': {'OfferToReceiveAudio':true, 'OfferToReceiveVideo':true }};
+var mediaConstraints = {
+  'mandatory': {
+    'OfferToReceiveAudio':true,
+    'OfferToReceiveVideo':true
+  }
+};
 
 // ----------------- handshake --------------
 var localSDP = document.getElementById('localSdp');
@@ -24,14 +29,14 @@ function recvSDP() {
   var text = remoteSDP.value;
   var sdp = JSON.parse(text);
   if (peerConnection) {
-    onAnswer(sdp);
+    answer(sdp);
   } else {
-    onOffer(sdp);
+    offer(sdp);
   }
   remoteSDP.value ="";
 }
 
-function onOffer(sdp) {
+function offer(sdp) {
   console.log("Received offer...", sdp);
 
   // set offer
@@ -51,7 +56,7 @@ function onOffer(sdp) {
   }, mediaConstraints);
 }
 
-function onAnswer(sdp) {
+function answer(sdp) {
   console.log("Received Answer...", sdp);
   peerConnection.setRemoteDescription(new RTCSessionDescription(sdp));
 }
@@ -67,8 +72,6 @@ function recvICE() {
 
   remoteICE.value ="";
 }
-
-
 
 function onCandidate(evt) {
   var candidate = new RTCIceCandidate({sdpMLineIndex:evt.sdpMLineIndex, sdpMid:evt.sdpMid, candidate:evt.candidate});
@@ -135,13 +138,13 @@ function prepareNewConnection() {
   // peer.addStream(localStream);
 
   peer.addEventListener("addstream", onRemoteStreamAdded, false);
-  peer.addEventListener("removestream", onRemoteStreamRemoved, false)
+  peer.addEventListener("removestream", onRemoteStreamRemoved, false);
 
-    // when remote adds a stream, hand it on to the local video element
-    function onRemoteStreamAdded(event) {
-      console.log("Added remote stream");
-      remoteVideo.src = window.webkitURL.createObjectURL(event.stream);
-    }
+  // when remote adds a stream, hand it on to the local video element
+  function onRemoteStreamAdded(event) {
+    console.log("Added remote stream");
+    remoteVideo.src = window.webkitURL.createObjectURL(event.stream);
+  }
 
   // when remote removes a stream, remove it from the local video element
   function onRemoteStreamRemoved(event) {
@@ -150,9 +153,6 @@ function prepareNewConnection() {
   }
 
   return peer;
-}
-
-function sendAnswer(evt) {
 }
 
 // -------- handling user UI event -----
@@ -167,11 +167,11 @@ function connect() {
   //  alert("Local stream not running yet - try again.");
   //}
   peerConnection = prepareNewConnection();
-  peerConnection.createOffer(function (sessionDescription) { // in case of success
-    peerConnection.setLocalDescription(sessionDescription);
-    console.log("Sending: SDP", sessionDescription);
-    sendSDP(sessionDescription);
-  }, function () { // in case of error
+  peerConnection.createOffer(function success(sdp) {
+    peerConnection.setLocalDescription(sdp);
+    console.log("Sending: SDP", sdp);
+    sendSDP(sdp);
+  }, function error() { // in case of error
     console.log("Create Offer failed");
   }, mediaConstraints);
 
@@ -193,17 +193,16 @@ function stop() {
 window.onload = function() {
   var $startVideo = document.getElementById("startVideo");
   var $stopVideo  = document.getElementById("stopVideo");
-  var $conect     = document.getElementById("connect");
-  var $hangUp     = document.getElementById("hangUp");
-
   $startVideo.onclick = startVideo;
   $stopVideo.onclick = stopVideo;
+
+  var $conect     = document.getElementById("connect");
+  var $hangUp     = document.getElementById("hangUp");
   $conect.onclick = connect;
   $hangUp.onclick = hangUp;
 
   var $recvSDP = document.getElementById("recvSDP");
   var $recvICE = document.getElementById("recvICE");
-
   $recvSDP.onclick = recvSDP;
   $recvICE.onclick = recvICE;
 }
