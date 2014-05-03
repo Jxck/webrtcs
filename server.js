@@ -18,9 +18,15 @@ var io = require('socket.io')
 // クライアントが接続してきたあと
 io.sockets.on('connection', function(socket) {
   // メッセージを受信したら
-  socket.on('message', function(data) {
+  socket.on('offer', function(data) {
     // 全てのクライアントに送り返す
-    socket.broadcast.emit('message', data);
+    socket.broadcast.emit('offer', data);
+    console.log(data);
+  });
+
+  socket.on('answer', function(data) {
+    // 全てのクライアントに送り返す
+    socket.broadcast.emit('answer', data);
     console.log(data);
   });
 });
