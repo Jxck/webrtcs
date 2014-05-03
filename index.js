@@ -73,10 +73,14 @@ function recvICE() {
   remoteICE.value ="";
 }
 
-function onCandidate(evt) {
-  var candidate = new RTCIceCandidate({sdpMLineIndex:evt.sdpMLineIndex, sdpMid:evt.sdpMid, candidate:evt.candidate});
-  console.log("Received Candidate...")
-    console.log(candidate);
+function onCandidate(cand) {
+  var candidate = new RTCIceCandidate({
+    sdpMLineIndex: cand.sdpMLineIndex,
+    sdpMid: cand.sdpMid,
+    candidate: cand.candidate
+  });
+  console.log("Received Candidate...");
+  console.log(candidate);
   peerConnection.addIceCandidate(candidate);
 }
 
@@ -112,10 +116,10 @@ function stopVideo() {
 
 // ---------------------- connection handling -----------------------
 function prepareNewConnection() {
-  var pc_config = {"iceServers":[]};
+  var pcConfig = { "iceServers": [] };
   var peer = null;
   try {
-    peer = new webkitRTCPeerConnection(pc_config);
+    peer = new webkitRTCPeerConnection(pcConfig);
   } catch (e) {
     console.log("Failed to create peerConnection, exception: " + e.message);
   }
@@ -124,11 +128,12 @@ function prepareNewConnection() {
   peer.onicecandidate = function (evt) {
     if (evt.candidate) {
       console.log(evt.candidate);
-      sendCandidate({type: "candidate", 
+      sendCandidate({
+        type: "candidate",
         sdpMLineIndex: evt.candidate.sdpMLineIndex,
         sdpMid: evt.candidate.sdpMid,
-        candidate: evt.candidate.candidate}
-        );
+        candidate: evt.candidate.candidate
+      });
     } else {
       console.log("End of candidates. ------------------- phase=" + evt.eventPhase);
     }
