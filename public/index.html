@@ -10,6 +10,12 @@
     height: 20px;
     border: 1px solid black;
   }
+  textarea {
+    float: left;
+  }
+  #view {
+    clear: both;
+  }
 </style>
 <div>
   <video id="local-video" autoplay></video>
@@ -22,5 +28,7 @@
   <button id="stopVideo">Stop video</button>
 </div>
 
-<h3>Session Description</h3>
-<textarea id="sdp" rows="30" cols="40" wrap="off"></textarea>
+<div id="view">
+  <textarea id="sdp" rows="30" cols="40" wrap="off"></textarea>
+  <textarea id="ice" rows="30" cols="40" wrap="off"></textarea>
+</div>

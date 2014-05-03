@@ -4,6 +4,11 @@ function prittysdp(sdp) {
   return text
 }
 
+function prittyice(ice) {
+  var text = JSON.stringify(ice, null, "       ");
+  return text;
+}
+
 var config = {
   media: {
     video: true,
@@ -29,16 +34,64 @@ var responser = null;
 $(function() {
   var $localVideo = $('#local-video').get(0);
   var $sdp = $('#sdp');
+  var $ice = $('#ice');
 
   // stop video
   $('#stopVideo').click(function() {
     $localVideo.src = "";
   });
 
+  socket.on('offer', function(offer) {
+    // create peer responser
+    responser = new webkitRTCPeerConnection(config.responser);
+    responser.setRemoteDescription(new RTCSessionDescription(offer));
+
+    // candidate
+    responser.onicecandidate = function(ice) {
+      if (ice.candidate) {
+        $ice.text($ice.text() + '\n' + prittyice(ice.candidate));
+        console.log(ice.candidate);
+        socket.emit('ice', ice.candidate);
+      } else {
+        $ice.text($ice.text() + '\n==END CANDIDATE==');
+      }
+    }
+
+    // answer
+    responser.createAnswer(function success(ans) {
+      responser.setLocalDescription(ans);
+      $sdp.text(prittysdp(ans));
+      socket.emit('answer', ans);
+    }, console.error, config.rtcoption);
+
+  });
+
+  socket.on('answer', function(sdp) {
+    requester.setRemoteDescription(new RTCSessionDescription(sdp));
+  });
+
+  socket.on('ice', function(ice) {
+    var candidate = new RTCIceCandidate(ice);
+    if (requester) {
+      requester.addIceCandidate(candidate);
+    } else {
+      responser.addIceCandidate(candidate);
+    }
+  });
 
   $('#connect').click(function() {
     // create peer requester
     requester = new webkitRTCPeerConnection(config.requester);
+
+    // candidate
+    requester.onicecandidate = function(ice) {
+      if (ice.candidate) {
+        $ice.text($ice.text() + '\n' + prittyice(ice.candidate));
+        socket.emit('ice', ice.candidate);
+      } else {
+        $ice.text($ice.text() + '\n==END CANDIDATE==');
+      }
+    }
 
     // offer
     requester.createOffer(function success(offer) {
@@ -48,24 +101,6 @@ $(function() {
     }, console.error, config.rtcoption);
   });
 
-  socket.on('offer', function(offer) {
-    // create peer responser
-    responser = new webkitRTCPeerConnection(config.responser);
-    responser.setRemoteDescription(new RTCSessionDescription(offer));
-    console.log(responser);
-
-    // answer
-    responser.createAnswer(function success(ans) {
-      responser.setLocalDescription(ans);
-      $sdp.text(prittysdp(ans));
-      socket.emit('answer', ans);
-    }, console.error, config.rtcoption);
-  });
-
-  socket.on('answer', function(sdp) {
-    console.log(sdp);
-    requester.setRemoteDescription(new RTCSessionDescription(sdp));
-  });
 
   // start video
   // navigator.webkitGetUserMedia(config.media, function success(stream) {
