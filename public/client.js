@@ -5,7 +5,7 @@ function prittysdp(sdp) {
 }
 
 function prittyice(ice) {
-  var text = JSON.stringify(ice, null, "       ");
+  var text = JSON.stringify(ice, null, "    ");
   return text;
 }
 
@@ -38,21 +38,6 @@ $(function() {
   var $sdp = $('#sdp');
   var $ice = $('#ice');
 
-  // stop
-  $('#stop').click(function() {
-    $localVideo.src = '';
-    $remoteVideo.src = '';
-    localStream.stop();
-    socket.disconnect();
-    if (requester) {
-      requester.close();
-      requester = null;
-    } else {
-      responser.close();
-      responser = null;
-    }
-  });
-
   socket.on('offer', function(offer) {
     // create peer responser
     responser = new webkitRTCPeerConnection(config.responser);
@@ -60,12 +45,12 @@ $(function() {
 
     // add stream
     responser.addStream(localStream);
-    responser.addEventListener('addstream', function(e) {
-      $remoteVideo.src = window.webkitURL.createObjectURL(e.stream);
-    }, false);
-    responser.addEventListener('removestream', function(e) {
+    responser.onaddstream = function(e) {
+      $remoteVideo.src = URL.createObjectURL(e.stream);
+    }
+    responser.onremovestream = function(e) {
       $remoteVideo.src = '';
-    }, false);
+    }
 
     // candidate
     responser.onicecandidate = function(ice) {
@@ -108,12 +93,12 @@ $(function() {
 
     // add stream
     requester.addStream(localStream);
-    requester.addEventListener('addstream', function(e) {
-      $remoteVideo.src = window.webkitURL.createObjectURL(e.stream);
-    }, false);
-    requester.addEventListener('removestream', function(e) {
+    requester.onaddstream = function(e) {
+      $remoteVideo.src = URL.createObjectURL(e.stream);
+    }
+    requester.onremovestream = function(e) {
       $remoteVideo.src = '';
-    }, false);
+    }
 
     // candidate
     requester.onicecandidate = function(ice) {
@@ -133,10 +118,25 @@ $(function() {
     }, console.error, config.rtcoption);
   });
 
+  // stop
+  $('#stop').click(function() {
+    $localVideo.src = '';
+    $remoteVideo.src = '';
+    localStream.stop();
+    socket.disconnect();
+    if (requester) {
+      requester.close();
+      requester = null;
+    } else {
+      responser.close();
+      responser = null;
+    }
+  });
+
   // start video
   navigator.webkitGetUserMedia(config.media, function success(stream) {
     localStream = stream;
-    $localVideo.src = window.webkitURL.createObjectURL(stream);
+    $localVideo.src = URL.createObjectURL(stream);
     $localVideo.play();
     $localVideo.volume = 0;
   }, console.error);
