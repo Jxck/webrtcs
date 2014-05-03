@@ -25,16 +25,6 @@ function sendSDP(sdp) {
   localSDP.value = text;
 }
 
-function recvSDP() {
-  var text = remoteSDP.value;
-  var sdp = JSON.parse(text);
-  if (peerConnection) {
-    answer(sdp);
-  } else {
-    offer(sdp);
-  }
-  remoteSDP.value ="";
-}
 
 function offer(sdp) {
   console.log("Received offer...", sdp);
@@ -62,16 +52,6 @@ function answer(sdp) {
 }
 
 //--- multi ICE candidate ---
-function recvICE() {
-  var text = remoteICE.value;
-  var arr = text.split(iceSeparator);
-  for (var i = 1, len = arr.length; i < len; i++) {
-    var evt = JSON.parse(arr[i]);
-    onCandidate(evt);
-  }
-
-  remoteICE.value ="";
-}
 
 function onCandidate(cand) {
   var candidate = new RTCIceCandidate({
@@ -92,26 +72,6 @@ function sendCandidate(candidate) {
 
   localICE.value = (localICE.value + CR + iceSeparator + CR + text + CR);
   localICE.scrollTop = localICE.scrollHeight;
-}
-
-// ---------------------- video handling -----------------------
-// start local video
-function startVideo() {
-  var config = {video: false, audio: false};
-  navigator.webkitGetUserMedia(config, function success(stream) {
-    localStream = stream;
-    localVideo.src = window.webkitURL.createObjectURL(stream);
-    localVideo.play();
-    localVideo.volume = 0;
-  }, function error(err) {
-    console.error(err, err.code)
-  });
-}
-
-// stop local video
-function stopVideo() {
-  localVideo.src = "";
-  localStream.stop();
 }
 
 // ---------------------- connection handling -----------------------
@@ -160,54 +120,85 @@ function prepareNewConnection() {
   return peer;
 }
 
-// -------- handling user UI event -----
-// start the connection upon user request
-function connect() {
-  if (peerStarted) return;
-  //if (!peerStarted && localStream && channelReady) {
-  //if (!peerStarted && localStream) {
-  //  sendOffer();
-  //  peerStarted = true;
-  //} else {
-  //  alert("Local stream not running yet - try again.");
-  //}
-  peerConnection = prepareNewConnection();
-  peerConnection.createOffer(function success(sdp) {
-    peerConnection.setLocalDescription(sdp);
-    console.log("Sending: SDP", sdp);
-    sendSDP(sdp);
-  }, function error() { // in case of error
-    console.log("Create Offer failed");
-  }, mediaConstraints);
-
-  peerStarted = true;
-}
-
-// stop the connection upon user request
-function hangUp() {
-  console.log("Hang up.");
-  stop();
-}
-
-function stop() {
-  peerConnection.close();
-  peerConnection = null;
-  peerStarted = false;
+var config = {
+  media: { video: true, audio: false }
 }
 
 window.onload = function() {
+  // start video
   var $startVideo = document.getElementById("startVideo");
+  $startVideo.onclick = function startVideo() {
+    navigator.webkitGetUserMedia(config.media, function success(stream) {
+      localStream = stream;
+      localVideo.src = window.webkitURL.createObjectURL(stream);
+      localVideo.play();
+      localVideo.volume = 0;
+    }, function error(err) {
+      console.error(err, err.code)
+    });
+  }
+
+  // stop video
   var $stopVideo  = document.getElementById("stopVideo");
-  $startVideo.onclick = startVideo;
-  $stopVideo.onclick = stopVideo;
+  $stopVideo.onclick = function stopVideo() {
+    localVideo.src = "";
+    localStream.stop();
+  }
 
+  // connect
   var $conect     = document.getElementById("connect");
-  var $hangUp     = document.getElementById("hangUp");
-  $conect.onclick = connect;
-  $hangUp.onclick = hangUp;
+  $conect.onclick = function connect() {
+    //if (!peerStarted && localStream && channelReady) {
+    //if (!peerStarted && localStream) {
+    //  sendOffer();
+    //  peerStarted = true;
+    //} else {
+    //  alert("Local stream not running yet - try again.");
+    //}
+    if (peerStarted) return;
+    peerConnection = prepareNewConnection();
+    peerConnection.createOffer(function success(sdp) {
+      peerConnection.setLocalDescription(sdp);
+      console.log("Sending: SDP", sdp);
+      sendSDP(sdp);
+    }, function error() { // in case of error
+      console.log("Create Offer failed");
+    }, mediaConstraints);
 
+    peerStarted = true;
+  }
+
+  // hangup
+  var $hangUp     = document.getElementById("hangUp");
+  $hangUp.onclick = function hangUp() {
+    console.log("Hang up.");
+    peerConnection.close();
+    peerConnection = null;
+    peerStarted = false;
+  }
+
+  // Receive SDP
   var $recvSDP = document.getElementById("recvSDP");
+  $recvSDP.onclick = function recvSDP() {
+    var text = remoteSDP.value;
+    var sdp = JSON.parse(text);
+    if (peerConnection) {
+      answer(sdp);
+    } else {
+      offer(sdp);
+    }
+    remoteSDP.value ="";
+  }
+
   var $recvICE = document.getElementById("recvICE");
-  $recvSDP.onclick = recvSDP;
-  $recvICE.onclick = recvICE;
-}
+  $recvICE.onclick = function recvICE() {
+    var text = remoteICE.value;
+    var arr = text.split(iceSeparator);
+    for (var i = 1, len = arr.length; i < len; i++) {
+      var evt = JSON.parse(arr[i]);
+      onCandidate(evt);
+    }
+
+    remoteICE.value ="";
+  };
+  }
