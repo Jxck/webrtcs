@@ -24,4 +24,8 @@ io.sockets.on('connection', function(socket) {
   socket.on('ice', function(data) {
     socket.broadcast.emit('ice', data);
   });
+
+  socket.on('disconnect', function(data) {
+    socket.broadcast.emit('stop', true);
+  });
 });

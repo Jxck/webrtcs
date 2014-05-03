@@ -31,7 +31,6 @@ var socket = io.connect();
 var requester = null;
 var responser = null;
 var localStream = null;
-var remoteStream = null;
 
 $(function() {
   var $localVideo = $('#local-video').get(0);
@@ -39,10 +38,19 @@ $(function() {
   var $sdp = $('#sdp');
   var $ice = $('#ice');
 
-  // stop video
-  $('#stopVideo').click(function() {
+  // stop
+  $('#stop').click(function() {
     $localVideo.src = '';
+    $remoteVideo.src = '';
     localStream.stop();
+    socket.disconnect();
+    if (requester) {
+      requester.close();
+      requester = null;
+    } else {
+      responser.close();
+      responser = null;
+    }
   });
 
   socket.on('offer', function(offer) {
@@ -75,7 +83,6 @@ $(function() {
       $sdp.text(prittysdp(ans));
       socket.emit('answer', ans);
     }, console.error, config.rtcoption);
-
   });
 
   socket.on('answer', function(sdp) {
@@ -89,6 +96,10 @@ $(function() {
     } else {
       responser.addIceCandidate(candidate);
     }
+  });
+
+  socket.on('stop', function() {
+    $('#stop').click();
   });
 
   $('#connect').click(function() {
