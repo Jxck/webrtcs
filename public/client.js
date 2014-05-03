@@ -1,3 +1,9 @@
+function prittysdp(sdp) {
+  var text = 'type:' + sdp.type + '\n';
+  text += sdp.sdp;
+  return text
+}
+
 var config = {
   media: {
     video: true,
@@ -22,34 +28,36 @@ var responser = null;
 
 $(function() {
   var $localVideo = $('#local-video').get(0);
+  var $sdp = $('#sdp');
 
   // stop video
   $('#stopVideo').click(function() {
     $localVideo.src = "";
   });
 
+
   $('#connect').click(function() {
     // create peer requester
     requester = new webkitRTCPeerConnection(config.requester);
 
     // offer
-    requester.createOffer(function success(sdp) {
-      console.log(sdp);
-      requester.setLocalDescription(sdp);
-      socket.emit('offer', sdp);
+    requester.createOffer(function success(offer) {
+      $sdp.text(prittysdp(offer));
+      requester.setLocalDescription(offer);
+      socket.emit('offer', offer);
     }, console.error, config.rtcoption);
   });
 
-  socket.on('offer', function(sdp) {
+  socket.on('offer', function(offer) {
     // create peer responser
     responser = new webkitRTCPeerConnection(config.responser);
-    responser.setRemoteDescription(new RTCSessionDescription(sdp));
+    responser.setRemoteDescription(new RTCSessionDescription(offer));
     console.log(responser);
 
     // answer
     responser.createAnswer(function success(ans) {
       responser.setLocalDescription(ans);
-      console.log(ans);
+      $sdp.text(prittysdp(ans));
       socket.emit('answer', ans);
     }, console.error, config.rtcoption);
   });
