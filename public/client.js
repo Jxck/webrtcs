@@ -131,7 +131,7 @@ $(function() {
     $('#stop').click();
   });
 
-  $('#connect').click(function() {
+  $('#enter').click(function() {
     // create peer requester
     requester = new webkitRTCPeerConnection(config.requester);
 
