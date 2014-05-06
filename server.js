@@ -10,7 +10,7 @@ console.log('server start:', 3000);
 
 // Socket.IO
 var io = require('socket.io')
-  , io = io.listen(server);
+  , io = io.listen(server, { 'log level': 2 });
 
 io.sockets.on('connection', function(socket) {
   socket.on('offer', function(data) {
