@@ -22,6 +22,10 @@ var config = {
       OfferToReceiveAudio:true,
       OfferToReceiveVideo:true
     }
+  },
+  channel: {
+    ordered: false,
+    maxRetransmitTime: 3000
   }
 }
 
@@ -30,6 +34,7 @@ var socket = io.connect();
 
 var requester = null;
 var responser = null;
+var dataChannel = null;
 var localStream = null;
 
 $(function() {
@@ -65,6 +70,27 @@ $(function() {
     // answer
     responser.createAnswer(function success(ans) {
       responser.setLocalDescription(ans);
+
+      responser.ondatachannel = function(e) {
+        // data channel
+        dataChannel = e.channel;
+
+        dataChannel.onerror = function (error) {
+          console.log("Data Channel Error:", error);
+        };
+
+        dataChannel.onmessage = function (event) {
+          console.log("Got Data Channel Message:", event.data);
+        };
+
+        dataChannel.onopen = function () {
+          dataChannel.send("Hello World!");
+        };
+
+        dataChannel.onclose = function () {
+          console.log("The Data Channel is Closed");
+        };
+      };
       $sdp.text(prittysdp(ans));
       socket.emit('answer', ans);
     }, console.error, config.rtcoption);
@@ -90,6 +116,25 @@ $(function() {
   $('#connect').click(function() {
     // create peer requester
     requester = new webkitRTCPeerConnection(config.requester);
+
+    // data channel
+    dataChannel = requester.createDataChannel('RTCDataChannel', config.channel);
+
+    dataChannel.onerror = function (error) {
+      console.log("Data Channel Error:", error);
+    };
+
+    dataChannel.onmessage = function (event) {
+      console.log("Got Data Channel Message:", event.data);
+    };
+
+    dataChannel.onopen = function () {
+      dataChannel.send("Hello World!");
+    };
+
+    dataChannel.onclose = function () {
+      console.log("The Data Channel is Closed");
+    };
 
     // add stream
     requester.addStream(localStream);
