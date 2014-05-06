@@ -57,8 +57,7 @@ function chat(dataChannel) {
 $(function() {
   var $localVideo = $('#local-video').get(0);
   var $remoteVideo = $('#remote-video').get(0);
-  var $sdp = $('#sdp');
-  var $ice = $('#ice');
+  var $thirdVideo = $('#third-video').get(0);
 
   socket.on('offer', function(offer) {
     // create peer responser
@@ -77,10 +76,10 @@ $(function() {
     // candidate
     responser.onicecandidate = function(ice) {
       if (ice.candidate) {
-        $ice.text($ice.text() + '\n' + prittyice(ice.candidate));
+        console.log(prittyice(ice.candidate));
         socket.emit('ice', ice.candidate);
       } else {
-        $ice.text($ice.text() + '\n==END CANDIDATE==');
+        console.log('==END CANDIDATE==');
       }
     }
 
@@ -94,7 +93,7 @@ $(function() {
         chat(dataChannel);
 
       };
-      $sdp.text(prittysdp(ans));
+      console.log(prittysdp(ans));
       socket.emit('answer', ans);
     }, console.error, config.rtcoption);
   });
@@ -136,16 +135,16 @@ $(function() {
     // candidate
     requester.onicecandidate = function(ice) {
       if (ice.candidate) {
-        $ice.text($ice.text() + '\n' + prittyice(ice.candidate));
+        console.log(prittyice(ice.candidate));
         socket.emit('ice', ice.candidate);
       } else {
-        $ice.text($ice.text() + '\n==END CANDIDATE==');
+        console.log('==END CANDIDATE==');
       }
     }
 
     // offer
     requester.createOffer(function success(offer) {
-      $sdp.text(prittysdp(offer));
+      console.log(prittysdp(offer));
       requester.setLocalDescription(offer);
       socket.emit('offer', offer);
     }, console.error, config.rtcoption);
