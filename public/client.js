@@ -34,8 +34,25 @@ var socket = io.connect();
 
 var requester = null;
 var responser = null;
-var dataChannel = null;
 var localStream = null;
+
+function chat(dataChannel) {
+  dataChannel.onerror = function (error) {
+    console.log("Data Channel Error:", error);
+  };
+
+  dataChannel.onmessage = function (event) {
+    console.log("Got Data Channel Message:", event.data);
+  };
+
+  dataChannel.onopen = function () {
+    dataChannel.send("Hello World!");
+  };
+
+  dataChannel.onclose = function () {
+    console.log("The Data Channel is Closed");
+  };
+}
 
 $(function() {
   var $localVideo = $('#local-video').get(0);
@@ -73,23 +90,9 @@ $(function() {
 
       responser.ondatachannel = function(e) {
         // data channel
-        dataChannel = e.channel;
+        var dataChannel = e.channel;
+        chat(dataChannel);
 
-        dataChannel.onerror = function (error) {
-          console.log("Data Channel Error:", error);
-        };
-
-        dataChannel.onmessage = function (event) {
-          console.log("Got Data Channel Message:", event.data);
-        };
-
-        dataChannel.onopen = function () {
-          dataChannel.send("Hello World!");
-        };
-
-        dataChannel.onclose = function () {
-          console.log("The Data Channel is Closed");
-        };
       };
       $sdp.text(prittysdp(ans));
       socket.emit('answer', ans);
@@ -118,23 +121,8 @@ $(function() {
     requester = new webkitRTCPeerConnection(config.requester);
 
     // data channel
-    dataChannel = requester.createDataChannel('RTCDataChannel', config.channel);
-
-    dataChannel.onerror = function (error) {
-      console.log("Data Channel Error:", error);
-    };
-
-    dataChannel.onmessage = function (event) {
-      console.log("Got Data Channel Message:", event.data);
-    };
-
-    dataChannel.onopen = function () {
-      dataChannel.send("Hello World!");
-    };
-
-    dataChannel.onclose = function () {
-      console.log("The Data Channel is Closed");
-    };
+    var dataChannel = requester.createDataChannel('RTCDataChannel', config.channel);
+    chat(dataChannel);
 
     // add stream
     requester.addStream(localStream);
