@@ -65,7 +65,9 @@ $(function() {
     responser.setRemoteDescription(new RTCSessionDescription(offer));
 
     // add stream
-    responser.addStream(localStream);
+    if(localStream) {
+      responser.addStream(localStream);
+    }
     responser.onaddstream = function(e) {
       $remoteVideo.src = URL.createObjectURL(e.stream);
     }
@@ -124,7 +126,9 @@ $(function() {
     chat(dataChannel);
 
     // add stream
-    requester.addStream(localStream);
+    if (localStream) {
+      requester.addStream(localStream);
+    }
     requester.onaddstream = function(e) {
       $remoteVideo.src = URL.createObjectURL(e.stream);
     }
@@ -165,11 +169,13 @@ $(function() {
     }
   });
 
-  // start video
-  navigator.webkitGetUserMedia(config.media, function success(stream) {
-    localStream = stream;
-    $localVideo.src = URL.createObjectURL(stream);
-    $localVideo.play();
-    $localVideo.volume = 0;
-  }, console.error);
+  $('#video').click(function() {
+    // start video
+    navigator.webkitGetUserMedia(config.media, function success(stream) {
+      localStream = stream;
+      $localVideo.src = URL.createObjectURL(stream);
+      $localVideo.play();
+      $localVideo.volume = 0;
+    }, console.error);
+  });
 });

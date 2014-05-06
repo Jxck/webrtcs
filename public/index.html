@@ -11,22 +11,30 @@
     border: 1px solid black;
   }
   textarea {
-    float: left;
+    display: block;
+    width: 40em;
   }
-  #view {
-    clear: both;
+  input[type="text"] {
+    width: 36em;
+  }
+  input[type="button"] {
+    width: 4em;
   }
 </style>
-<div>
-  <video id="local-video" autoplay></video>
-  <video id="remote-video" autoplay></video>
-</div>
 <div>
   <button id="connect">Connect</button>
   <button id="stop">Stop</button>
 </div>
+<div>
+  <video id="local-video" autoplay></video>
+  <video id="remote-video" autoplay></video>
+  <video id="third-video" autoplay></video>
+</div>
+<div>
+  <button id="video">Video</button>
+</div>
 
-<div id="view">
-  <textarea id="sdp" rows="30" cols="40" wrap="off"></textarea>
-  <textarea id="ice" rows="30" cols="40" wrap="off"></textarea>
+<div id="chat">
+  <textarea id="chat" rows="10" cols="50" wrap="off"></textarea>
+  <p><input id="chat-input" type="text"></input><input id="chat-submit" type="submit"></input></p>
 </div>
