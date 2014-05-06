@@ -13,16 +13,25 @@ var io = require('socket.io')
   , io = io.listen(server, { 'log level': 2 });
 
 io.sockets.on('connection', function(socket) {
+
+  socket.on('enter', function() {
+    console.log('enter');
+    socket.broadcast.emit('enter', { id: socket.id });
+  });
+
   socket.on('offer', function(data) {
-    socket.broadcast.emit('offer', data);
+    console.log('offer', data);
+    io.sockets.socket(data.to).emit('offer', { id: socket.id, offer: data.offer });
   });
 
   socket.on('answer', function(data) {
-    socket.broadcast.emit('answer', data);
+    console.log('answer', data);
+    io.sockets.socket(data.to).emit('answer', { id: socket.id, ans: data.ans });
   });
 
   socket.on('ice', function(data) {
-    socket.broadcast.emit('ice', data);
+    console.log('ice', data);
+    io.sockets.socket(data.to).emit('ice', { id: socket.id, ice: data.ice });
   });
 
   socket.on('disconnect', function(data) {

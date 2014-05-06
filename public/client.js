@@ -73,10 +73,12 @@ $(function() {
   var $remoteVideo = $('#remote-video').get(0);
   var $thirdVideo = $('#third-video').get(0);
 
-  socket.on('offer', function(offer) {
+  socket.on('offer', function(data) {
+    console.log('on offer', data);
+
     // create peer responser
     responser = new webkitRTCPeerConnection(config.responser);
-    responser.setRemoteDescription(new RTCSessionDescription(offer));
+    responser.setRemoteDescription(new RTCSessionDescription(data.offer));
 
     // add stream
     if(localStream) {
@@ -92,8 +94,8 @@ $(function() {
     // candidate
     responser.onicecandidate = function(ice) {
       if (ice.candidate) {
-        console.log(prittyice(ice.candidate));
-        socket.emit('ice', ice.candidate);
+        // console.log(prittyice(ice.candidate));
+        socket.emit('ice', { to: data.id, ice: ice.candidate });
       } else {
         console.log('==END CANDIDATE==');
       }
@@ -107,19 +109,19 @@ $(function() {
         // data channel
         var dataChannel = e.channel;
         chat(dataChannel);
-
       };
-      console.log(prittysdp(ans));
-      socket.emit('answer', ans);
+
+      // console.log(prittysdp(ans));
+      socket.emit('answer', { to: data.id, ans: ans });
     }, console.error, config.rtcoption);
   });
 
-  socket.on('answer', function(sdp) {
-    requester.setRemoteDescription(new RTCSessionDescription(sdp));
+  socket.on('answer', function(data) {
+    requester.setRemoteDescription(new RTCSessionDescription(data.ans));
   });
 
-  socket.on('ice', function(ice) {
-    var candidate = new RTCIceCandidate(ice);
+  socket.on('ice', function(data) {
+    var candidate = new RTCIceCandidate(data.ice);
     if (requester) {
       requester.addIceCandidate(candidate);
     } else {
@@ -131,7 +133,8 @@ $(function() {
     $('#stop').click();
   });
 
-  $('#enter').click(function() {
+  socket.on('enter', function(data) {
+    console.log('on enter', data);
     // create peer requester
     requester = new webkitRTCPeerConnection(config.requester);
 
@@ -153,8 +156,8 @@ $(function() {
     // candidate
     requester.onicecandidate = function(ice) {
       if (ice.candidate) {
-        console.log(prittyice(ice.candidate));
-        socket.emit('ice', ice.candidate);
+        // console.log(prittyice(ice.candidate));
+        socket.emit('ice', { to: data.id, ice: ice.candidate });
       } else {
         console.log('==END CANDIDATE==');
       }
@@ -162,10 +165,16 @@ $(function() {
 
     // offer
     requester.createOffer(function success(offer) {
-      console.log(prittysdp(offer));
+      // console.log(prittysdp(offer));
       requester.setLocalDescription(offer);
-      socket.emit('offer', offer);
+      console.log('emit offer');
+      socket.emit('offer', { to: data.id, offer: offer });
     }, console.error, config.rtcoption);
+  });
+
+  $('#enter').click(function() {
+    console.log('enter');
+    socket.emit('enter');
   });
 
   // stop
