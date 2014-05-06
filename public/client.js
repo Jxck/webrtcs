@@ -37,21 +37,35 @@ var responser = null;
 var localStream = null;
 
 function chat(dataChannel) {
+  var $chatView = $('#chatView');
+  var $chatInput = $('#chatInput');
+  var $chatSubmit = $('#chatSubmit');
+
+  dataChannel.onopen = function () {
+    console.log('chat open');
+    $chatInput.prop('disabled', false);
+  };
+
+  dataChannel.onmessage = function (e) {
+    $chatView.val($chatView.val() + e.data + '\n');
+    console.log("Got Data Channel Message:", e.data);
+  };
+
   dataChannel.onerror = function (error) {
+    $chatInput.prop('disabled', true);
     console.log("Data Channel Error:", error);
   };
 
-  dataChannel.onmessage = function (event) {
-    console.log("Got Data Channel Message:", event.data);
-  };
-
-  dataChannel.onopen = function () {
-    dataChannel.send("Hello World!");
-  };
-
   dataChannel.onclose = function () {
+    $chatInput.prop('disabled', true);
     console.log("The Data Channel is Closed");
   };
+
+  $chatSubmit.click(function() {
+    var message = $chatInput.val();
+    dataChannel.send(message);
+    $chatView.val($chatView.val() + message + '\n');
+  });
 }
 
 $(function() {
@@ -158,12 +172,14 @@ $(function() {
   $('#stop').click(function() {
     $localVideo.src = '';
     $remoteVideo.src = '';
-    localStream.stop();
+    if (localStream) {
+      localStream.stop();
+    }
     socket.disconnect();
     if (requester) {
       requester.close();
       requester = null;
-    } else {
+    } else if (responser) {
       responser.close();
       responser = null;
     }
