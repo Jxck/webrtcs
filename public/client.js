@@ -77,7 +77,7 @@ $(function() {
     console.log('on offer', data);
 
     // create peer responser
-    responser = new webkitRTCPeerConnection(config.responser);
+    responser = new webkitRTCPeerConnection(config.peer);
     responser.setRemoteDescription(new RTCSessionDescription(data.offer));
 
     // add stream
