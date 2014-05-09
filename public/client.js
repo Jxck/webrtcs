@@ -41,25 +41,25 @@ function chat(dataChannel) {
   var $chatInput = $('#chatInput');
   var $chatSubmit = $('#chatSubmit');
 
-  dataChannel.onopen = function () {
+  dataChannel.addEventListener('open', function () {
     console.log('chat open');
     $chatInput.prop('disabled', false);
-  };
+  });
 
-  dataChannel.onmessage = function (e) {
+  dataChannel.addEventListener('message', function (e) {
     $chatView.val($chatView.val() + e.data + '\n');
     console.log("Got Data Channel Message:", e.data);
-  };
+  });
 
-  dataChannel.onerror = function (error) {
+  dataChannel.addEventListener('error',function (error) {
     $chatInput.prop('disabled', true);
     console.log("Data Channel Error:", error);
-  };
+  });
 
-  dataChannel.onclose = function () {
+  dataChannel.addEventListener('close', function () {
     $chatInput.prop('disabled', true);
     console.log("The Data Channel is Closed");
-  };
+  });
 
   $chatSubmit.click(function() {
     var message = $chatInput.val();
