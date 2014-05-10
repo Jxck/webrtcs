@@ -22,6 +22,7 @@ io.sockets.on('connection', function(socket) {
   });
 
   socket.on('ice', function(data) {
+    console.log('ice', data);
     socket.broadcast.emit('ice', data);
   });
 

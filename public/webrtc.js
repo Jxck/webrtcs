@@ -2,6 +2,41 @@ var REQUESTER = "requester"
   , RESPONSER = "responser"
   ;
 
+function Channel(channel) {
+  console.log('channel', channel);
+  this.channel = channel;
+
+  var $chatView = $('#chatView');
+  var $chatInput = $('#chatInput');
+  var $chatSubmit = $('#chatSubmit');
+
+  channel.onopen = function () {
+    console.log('chat open');
+    $chatInput.prop('disabled', false);
+  };
+
+  channel.onmessage = function (e) {
+    $chatView.val($chatView.val() + e.data + '\n');
+    console.log("Got Data Channel Message:", e.data);
+  };
+
+  channel.onerror = function (error) {
+    $chatInput.prop('disabled', true);
+    console.log("Data Channel Error:", error);
+  };
+
+  channel.onclose = function () {
+    $chatInput.prop('disabled', true);
+    console.log("The Data Channel is Closed");
+  };
+
+  $chatSubmit.click(function() {
+    var message = $chatInput.val();
+    channel.send(message);
+    $chatView.val($chatView.val() + message + '\n');
+  });
+}
+
 function Peer() {
   this.context = "";
   this.peer = null;
@@ -16,12 +51,12 @@ Peer.prototype.createPeer = function() {
 
   // candidate
   self.peer.onicecandidate = function(ice) {
-    console.log('ice', this.context, ice);
+    console.log('ice', self.context, ice);
     if (ice.candidate) {
       console.log(prittyice(ice.candidate));
-      socket.emit('ice', this.context, ice.candidate);
+      socket.emit('ice', ice.candidate);
     } else {
-     // console.log('==END CANDIDATE==');
+      console.log('==END CANDIDATE==');
     }
   }
 }
@@ -29,7 +64,7 @@ Peer.prototype.createPeer = function() {
 Peer.prototype.initialize = function() {
   var self = this;
   socket.on('offer', function(offer) {
-    console.log('offer', this.context, offer);
+    console.log('offer', self.context, offer);
     if (self.context == REQUESTER) {
       throw new Error("invalid context: onOffer in requester");
     }
@@ -41,26 +76,27 @@ Peer.prototype.initialize = function() {
 
     // answer
     self.peer.createAnswer(function success(ans) {
-      console.log('create answer', this.context);
+      console.log('create answer', self.context);
       self.peer.setLocalDescription(ans);
 
       self.peer.ondatachannel = function(e) {
         // data channel
-        this.channel = e.channel;
+        this.channel = new Channel(e.channel);
       };
       console.log(prittysdp(ans));
-      socket.emit('answer', this.context, ans);
+      socket.emit('answer', ans);
     }, console.error, config.rtcoption);
   });
 
   socket.on('answer', function(sdp) {
-    console.log('answer', this.context);
+    console.log('answer', self.context);
     console.log(sdp);
     self.peer.setRemoteDescription(new RTCSessionDescription(sdp));
   });
 
   socket.on('ice', function(ice) {
-    console.log('ice', this.context);
+    console.log('ice', self.context);
+    console.log('ice', ice);
     var candidate = new RTCIceCandidate(ice);
     self.peer.addIceCandidate(candidate);
   });
@@ -74,13 +110,14 @@ Peer.prototype.connect = function() {
   self.createPeer();
 
   // data channel
-  self.channel = self.peer.createDataChannel('RTCDataChannel', config.channel);
+  var channel = self.peer.createDataChannel('RTCDataChannel', config.channel);
+  self.channel = new Channel(channel);
 
   self.peer.createOffer(function success(offer) {
-    console.log('create offer', this.context);
+    console.log('create offer', self.context);
     console.log(prittysdp(offer));
     self.peer.setLocalDescription(offer);
-    socket.emit('offer', this.context, offer);
+    socket.emit('offer', offer);
   }, console.error, config.rtcoption);
 }
 
